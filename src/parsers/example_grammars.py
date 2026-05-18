@@ -1,3 +1,7 @@
+"""
+Example grammars from book "Modern Compiler Implementation in C" by Appel.
+"""
+
 GRAMMAR_3_12: list[str] = [
     "Z -> d",
     "Z -> X Y Z",

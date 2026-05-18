@@ -18,8 +18,6 @@ class LREngine:
     def get_action(self, sym: str) -> LRAction:
         # Given the valid grammar for LR parser, actions should have inside
         # only one action. We check it, if that's true we unpack the value
-        # TODO: that's suboptimal, also creating the collection from set
-        # seems to me like wild idea in terms of memory
         actions = self.table[self.curr_state()][sym]
         assert len(actions) == 1, f"{actions=}, {self.curr_state()=}, {sym=}"
         return next(iter(actions))
