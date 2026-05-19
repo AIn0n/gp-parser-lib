@@ -1,0 +1,64 @@
+from parsers.bison_grammar_parser import bison_to_ruleset
+
+
+def test_given_valid_yacc_grammar_example_func_returns_valid_amount_of_rules():
+    simple_grammar = r"""
+%union {
+	int pos;
+	int ival;
+	string sval;
+	}
+
+%token <sval> ID STRING
+%token <ival> INT
+
+%token
+    COMMA COLON SEMICOLON
+    LPAREN RPAREN
+    L_SQR_BRCK R_SQR_BRCK
+    L_MO_BRCK R_MO_BRCK DOT
+    PLUS MINUS TIMES DIVIDE EQ NEQ LT LE GT GE
+    AND OR ASSIGN
+    ARRAY IF ELSE WHILE FOR RETURN
+    BREAK STRUCT
+    ARROW REF
+
+%start expression_list
+
+%%
+
+
+s_expression
+    : STRING
+    | INT
+    ;
+
+expression
+    : s_expression
+    | ID ASSIGN expression
+    | open_if
+    ;
+
+
+open_if
+    : IF LPAREN expression RPAREN expression
+    | IF LPAREN expression RPAREN closed_if ELSE expression
+    ;
+
+closed_if
+    : IF LPAREN expression RPAREN closed_if ELSE closed_if
+    | s_expression
+    ;
+
+
+expression_list
+    : expression expression_list_aux ;
+
+expression_list_aux
+    : SEMICOLON expression expression_list_aux
+    |
+    ;
+"""
+    ruleset = bison_to_ruleset(simple_grammar)
+
+    assert len(ruleset.rules) == 12

@@ -5,7 +5,6 @@ most of the code written for bison with minor tweaks
 """
 
 from dataclasses import dataclass
-from pathlib import Path
 import re
 
 from parsers.base_parser import RuleType
@@ -36,9 +35,8 @@ def _remove_sem_actions(grm_raw: str) -> str:
     return comment_re.sub("", grm_raw)
 
 
-def bison_load_as_rules(grm: Path) -> RuleSet:
-    with open(grm, mode="r", encoding="utf-8") as f:
-        splitted_text: list[str] = f.read().split("%%")
+def bison_to_ruleset(grm: str) -> RuleSet:
+    splitted_text = grm.split("%%")
 
     assert len(splitted_text) >= 2, "Grammar with minimum two sections supported"
 
@@ -46,13 +44,14 @@ def bison_load_as_rules(grm: Path) -> RuleSet:
 
     unparsed_rules = _remove_sem_actions(grm_raw).split(";")
     rules: dict[int, RuleType] = dict()
-    for idx, unprs_rule in enumerate(unparsed_rules):
+    idx = 0
+    for unprs_rule in unparsed_rules:
         if len(unprs_rule) == 0 or unprs_rule.isspace():
             continue
         lhs, rhs = unprs_rule.split(":")
-        rules[idx] = RuleType(
-            lhs=lhs.strip(), rhs=tuple([el.strip() for el in rhs.split("|")])
-        )
+        for el in rhs.split("|"):
+            rules[idx] = RuleType(lhs=lhs.strip(), rhs=tuple(el.strip().split()))
+            idx += 1
 
     assert len(rules) >= 1, "no rules found!"
 
@@ -65,12 +64,3 @@ def bison_load_as_rules(grm: Path) -> RuleSet:
         start_sym_idx = 0
 
     return RuleSet(start_rule_idx=start_sym_idx, rules=rules)
-
-
-if __name__ == "__main__":
-    p = Path("/Users/szymongorka/git/gp-parser-lib/examples_yacc/mci.y")
-    print(bison_load_as_rules(p))
-    p = Path("/Users/szymongorka/git/gp-parser-lib/examples_yacc/code.y")
-    print(bison_load_as_rules(p))
-    p = Path("/Users/szymongorka/git/gp-parser-lib/examples_yacc/simple_grammar.y")
-    print(bison_load_as_rules(p))
