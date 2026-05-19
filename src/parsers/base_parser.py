@@ -2,7 +2,9 @@ from dataclasses import dataclass
 from functools import cached_property
 from itertools import chain
 from collections import defaultdict
-from typing import NamedTuple, MutableMapping
+from typing import MutableMapping
+
+from parsers.parser_types import RuleSet
 
 
 @dataclass(frozen=True, slots=True)
@@ -14,29 +16,18 @@ class ParserPrintStyler:
     pipe_ne: str = "└"
 
 
-class RuleType(NamedTuple):
-    lhs: str
-    rhs: tuple[str, ...]
-
-    @staticmethod
-    def from_str(s: str) -> RuleType:
-        lhs, rhs = s.split("->")
-        return RuleType(lhs=lhs.strip(), rhs=tuple(rhs.strip().split()))
-
-    def __str__(self) -> str:
-        return f"{self.lhs} -> " + " ".join(self.rhs)
-
-
 class BaseParser:
     """
     Class with the logic for adding new rules, printing the rules, handling the
     printing styling, etc.
     """
 
-    def __init__(self, *rules: str, styling: ParserPrintStyler | None = None) -> None:
+    def __init__(
+        self, ruleset: RuleSet, styling: ParserPrintStyler | None = None
+    ) -> None:
         if styling is None:
             styling = ParserPrintStyler()
-        self.rules: set[RuleType] = set(RuleType.from_str(el) for el in rules)
+        self.ruleset: RuleSet = ruleset
         self.styling = styling
 
         self.nullables: set[str] = set()
@@ -71,7 +62,7 @@ class BaseParser:
 
         while True:
             changed = self._count_first_follow_nullables()
-            for x, y in self.rules:
+            for x, y in self.ruleset.rules.values():
                 k = len(y)
                 if self._is_sequence_nullable(y):
                     self.nullables.add(x)
@@ -90,11 +81,13 @@ class BaseParser:
 
     @cached_property
     def non_terminals(self) -> set[str]:
-        return set([el.lhs for el in self.rules])
+        return set([el.lhs for el in self.ruleset.rules.values()])
 
     @cached_property
     def terminals(self) -> set[str]:
-        all_rhs_symbols = set(chain.from_iterable([el.rhs for el in self.rules]))
+        all_rhs_symbols = set(
+            chain.from_iterable([el.rhs for el in self.ruleset.rules.values()])
+        )
         # everything from the rules, except right hands side
         return all_rhs_symbols - self.non_terminals
 
@@ -103,7 +96,7 @@ class BaseParser:
 
     def __str__(self) -> str:
         rules_dict = defaultdict(list)
-        for lhs, rhs in self.rules:
+        for lhs, rhs in self.ruleset.rules.values():
             rules_dict[lhs].append(rhs)
 
         left_pad = max(map(len, rules_dict.keys())) + 1

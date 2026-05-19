@@ -10,7 +10,7 @@ class SLRParser(LR0Parser):
         symbols and actions mapping.
         """
 
-        rule_lookup = {r: i for i, r in self.indexed_rules.items()}
+        rule_lookup = {r: i for i, r in self.ruleset.rules.items()}
         t: LRParsingTable = self._init_parsing_table()
         for idx, i in self.states.items():
             for item in i:
@@ -21,8 +21,8 @@ class SLRParser(LR0Parser):
                     # page 63
                     for non_term in self.follow[item.rule.lhs]:
                         t[idx][non_term].add(LRAction.reduce(rule_idx))
-                if item.peek_after_dot() == self.eol:
-                    t[idx][self.eol].add(LRAction.accept())
+                if item.peek_after_dot() == self.ruleset.eol:
+                    t[idx][self.ruleset.eol].add(LRAction.accept())
 
         self._add_edges_to_parsing_table(t)
         return t

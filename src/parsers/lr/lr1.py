@@ -9,16 +9,16 @@ from parsers.lr.lr_types import (
     IndexedLREdge,
     lr_state_to_str,
 )
+from parsers.parser_types import RuleSet
 
 
 class LR1Parser(LR0Parser):
     def __init__(
         self,
-        *rules: str,
+        ruleset: RuleSet,
         styling: ParserPrintStyler | None = None,
-        end_symbol: str = "$",
     ):
-        super().__init__(*rules, styling=styling, end_symbol=end_symbol)
+        super().__init__(ruleset, styling=styling)
 
     def goto(self, i: LRState, x: str) -> LRState:  # type: ignore[override]
         j = frozenset([el.advance_dot() for el in i if el.peek_after_dot() == x])
@@ -31,7 +31,7 @@ class LR1Parser(LR0Parser):
                 x: str | None = item.peek_after_dot()
                 if x is None or x in self.terminals:
                     continue
-                for rule in self.rules:
+                for rule in self.ruleset.rules.values():
                     if rule.lhs != x:
                         continue
                     # omitting X, getting all the elements after it
@@ -62,7 +62,7 @@ class LR1Parser(LR0Parser):
         symbols and actions mapping.
         """
 
-        rule_lookup = {r: i for i, r in self.indexed_rules.items()}
+        rule_lookup = {r: i for i, r in self.ruleset.rules.items()}
         t: LRParsingTable = self._init_parsing_table()
         for idx, i in self.states.items():
             for item in i:
@@ -72,8 +72,8 @@ class LR1Parser(LR0Parser):
                     # page 64
                     rule_idx = rule_lookup[item.to_rule()]
                     t[idx][item.lookahead].add(LRAction.reduce(rule_idx))
-                if item.peek_after_dot() == self.eol:
-                    t[idx][self.eol].add(LRAction.accept())
+                if item.peek_after_dot() == self.ruleset.eol:
+                    t[idx][self.ruleset.eol].add(LRAction.accept())
 
         self._add_edges_to_parsing_table(t)
         return t
@@ -103,17 +103,3 @@ class LR1Parser(LR0Parser):
         self.states = {k: v for k, v in self.states.items() if k not in mapping.keys()}
         self.parsing_table = self._compute_parsing_table()
         return self
-
-
-if __name__ == "__main__":
-    grammar_ex_3_7 = [
-        "S -> G $",
-        "G -> P",
-        "G -> P G",
-        "P -> id : R",
-        "R -> id R",
-        "R -> ",
-    ]
-
-    parser = LR1Parser(*grammar_ex_3_7)
-    parser.print_rules_and_states()

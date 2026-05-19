@@ -27,7 +27,7 @@ GRAMMAR_3_15: list[str] = [
 ]
 
 GRAMMAR_3_20: list[str] = [
-    "S' -> S $",
+    "S' -> S",
     "S -> ( L )",
     "S -> x",
     "L -> S",
@@ -35,14 +35,14 @@ GRAMMAR_3_20: list[str] = [
 ]
 
 GRAMMAR_3_23: list[str] = [
-    "S -> E $",
+    "S -> E",
     "E -> T + E",
     "E -> T",
     "T -> x",
 ]
 
 GRAMMAR_3_26: list[str] = [
-    "S` -> S $",
+    "S` -> S",
     "S -> V = E",
     "E -> V",
     "V -> x",

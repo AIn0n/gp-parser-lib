@@ -1,4 +1,4 @@
-from parsers.bison_grammar_parser import bison_to_ruleset
+from parsers.grammars.bison_grammar_parser import bison_to_ruleset
 
 
 SIMPLE_GRM = r"""
@@ -75,3 +75,9 @@ def test_given_valid_yacc_grammar_with_empty_rule_returns_empty_parsed_rule():
         if el.lhs == empty_rule_lhs and len(el.rhs) == 0
     ]
     assert len(empty_rules_with_given_lhs) == 1
+
+
+def test_given_grammar_with_defined_start_function_returns_valid_start_sym_idx():
+    ruleset = bison_to_ruleset(SIMPLE_GRM)
+
+    assert ruleset.start_rule_idx == 9

@@ -1,24 +1,26 @@
 from collections import defaultdict
+from typing import Collection
 
 from parsers.base_parser import BaseParser, ParserPrintStyler
-from parsers.example_grammars import GRAMMAR_3_12
+from parsers.parser_types import RuleSet
 
 from tabulate import tabulate
 
 
 class LL1Parser(BaseParser):
-    def __init__(self, *rules: str, styling: ParserPrintStyler | None = None) -> None:
-        super().__init__(*rules, styling=styling)
-        self.compute_first_follow_nullable()
+    def __init__(
+        self, ruleset: RuleSet, styling: ParserPrintStyler | None = None
+    ) -> None:
+        super().__init__(ruleset, styling=styling)
 
-    def nullable_rhs(self, y: list[str]) -> bool:
+    def nullable_rhs(self, y: Collection[str]) -> bool:
         return (not len(y)) or all(map(lambda x: x in self.nullables, y))
 
     @property
     def parsing_table(self):
         table = defaultdict(lambda: defaultdict(set))
 
-        for x, y in self.rules:
+        for x, y in self.ruleset.rules.values():
             for t in self.first_rhs(y):
                 table[x][t].add((x, y))
             if not self.nullable_rhs(y):
@@ -42,17 +44,3 @@ class LL1Parser(BaseParser):
             list_table.append([row] + [self._table_cell2str(row, col) for col in cols])
 
         return tabulate(list_table, headers=[""] + cols, tablefmt=fmt)
-
-
-if __name__ == "__main__":
-    # Example from grammar 3.12
-    p = LL1Parser(*GRAMMAR_3_12)
-    non_terminals = p.non_terminals
-    print(f"{non_terminals=}")
-    print(f"{p.nullables=}")
-    interesting_first = {k: v for k, v in p.first.items() if k in non_terminals}
-    print(f"first = {interesting_first}")
-    interesting_follows = {k: v for k, v in p.follow.items() if k in non_terminals}
-    print(f"{interesting_follows=}")
-    p.parsing_table
-    print(f"{p.to_tabulate()}")

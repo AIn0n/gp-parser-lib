@@ -4,16 +4,10 @@ not 100% compatibility, rather, I need it to be compatible enough to copy-paste
 most of the code written for bison with minor tweaks
 """
 
-from dataclasses import dataclass
+from parsers.parser_types import RuleSet
 import re
 
-from parsers.base_parser import RuleType
-
-
-@dataclass(frozen=True, slots=True)
-class RuleSet:
-    start_rule_idx: int
-    rules: dict[int, RuleType]
+from parsers.parser_types import RuleType
 
 
 def _find_start_symbol(dec_raw: str) -> str | None:
@@ -35,35 +29,40 @@ def _remove_sem_actions(grm_raw: str) -> str:
     return comment_re.sub("", grm_raw)
 
 
-def bison_to_ruleset(grm: str) -> RuleSet:
+def bison_to_ruleset(grm: str, eol: str = "$end") -> RuleSet:
     splitted_text = grm.split("%%")
 
     assert len(splitted_text) >= 2, "Grammar with minimum two sections supported"
 
     dec_raw, grm_raw, *_ = splitted_text
 
+    # look for the start rule in the first part with declarations
+    start_sym = _find_start_symbol(dec_raw)
+    print(f"{start_sym=}")
+
     unparsed_rules = _remove_sem_actions(grm_raw).split(";")
     rules: dict[int, RuleType] = dict()
+    start_sym_idx: int = 0
     idx = 0
     for unprs_rule in unparsed_rules:
         if len(unprs_rule) == 0 or unprs_rule.isspace():
             continue
-        lhs, rhs = unprs_rule.split(":")
-        for el in rhs.split("|"):
-            rules[idx] = RuleType(lhs=lhs.strip(), rhs=tuple(el.strip().split()))
+        lhs, rhs_col = unprs_rule.split(":")
+        lhs = lhs.strip()
+        if start_sym is None:
+            start_sym = lhs
+        for el in rhs_col.split("|"):
+            rhs = el.strip().split()
+            if lhs == start_sym:
+                rhs.append(eol)
+                start_sym_idx = idx
+
+            rules[idx] = RuleType(lhs=lhs, rhs=tuple(rhs))
             idx += 1
 
     assert len(rules) >= 1, "no rules found!"
 
-    # look for the start rule in the first part with declarations
-    if start_sym := _find_start_symbol(dec_raw):
-        start_sym_idxs = [k for k, v in rules.items() if v.lhs == start_sym]
-        assert len(start_sym_idxs) == 1, "Only one grammar start rule supported"
-        start_sym_idx = start_sym_idxs[0]
-    else:
-        start_sym_idx = 0
-
-    return RuleSet(start_rule_idx=start_sym_idx, rules=rules)
+    return RuleSet(start_rule_idx=start_sym_idx, rules=rules, eol=eol)
 
 
 if __name__ == "__main__":

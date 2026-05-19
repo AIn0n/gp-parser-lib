@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Mapping, Sequence
 from collections import defaultdict
 
-from parsers.base_parser import RuleType
+from parsers.parser_types import RuleType
 
 
 class LRActionEnum(StrEnum):
@@ -97,9 +97,17 @@ class LRItem:
         return LRItem(rule=rule, dot_pos=0, lookahead=None)
 
     @staticmethod
-    def from_rule_str(rule: str, dot_pos: int = 0, lookahead: str | None = None):
+    def from_rule_str(
+        rule: str,
+        eol: str,
+        is_start: bool = False,
+        dot_pos: int = 0,
+        lookahead: str | None = None,
+    ):
         return LRItem(
-            rule=RuleType.from_str(rule), dot_pos=dot_pos, lookahead=lookahead
+            rule=RuleType.from_str(rule, eol, is_start=is_start),
+            dot_pos=dot_pos,
+            lookahead=lookahead,
         )
 
 

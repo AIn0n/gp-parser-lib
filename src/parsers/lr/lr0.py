@@ -3,7 +3,8 @@ from tabulate import tabulate
 from typing import Optional
 from functools import cached_property
 
-from parsers.base_parser import ParserPrintStyler, BaseParser, RuleType
+from parsers.base_parser import ParserPrintStyler, BaseParser
+from parsers.parser_types import RuleSet, RuleType
 from parsers.lr.lr_types import (
     LRAction,
     LREdge,
@@ -16,36 +17,15 @@ from parsers.lr.lr_types import (
 
 
 class LR0Parser(BaseParser):
-    def __init__(
-        self,
-        *rules: str,
-        styling: Optional[ParserPrintStyler] = None,
-        end_symbol: str = "$",
-    ):
-        super().__init__(*rules, styling=styling)
-        self.eol = end_symbol
+    def __init__(self, ruleset: RuleSet, styling: Optional[ParserPrintStyler] = None):
+        super().__init__(ruleset, styling=styling)
         self.states: dict[int, LRState] = dict()
         self.edges: set[IndexedLREdge] = set()
         self.compute_states_and_edges()
         self.parsing_table = self._compute_parsing_table()
 
-    @cached_property
-    def indexed_rules(self) -> dict[int, RuleType]:
-        return {k: v for k, v in enumerate(self.rules)}
-
     def get_start_rule(self) -> RuleType:
-        """
-        start rule for production of LR(0) will be the rule, where you have end
-        symbol at the end, by default let it be dollar sign, exactly like in the
-        book
-        """
-        start = [el for el in self.rules if len(el.rhs) and el.rhs[-1] == self.eol]
-        # idk if that's valid or not,
-        # it seems logical that grammar should not have two rules ending with
-        # End of File, but who knows
-        assert len(start) == 1
-
-        return start[0]
+        return self.ruleset.rules[self.ruleset.start_rule_idx]
 
     def closure(self, i: LRState) -> LRState:
         while True:
@@ -57,7 +37,7 @@ class LR0Parser(BaseParser):
                 x: Optional[str] = el.peek_after_dot()
                 if x is None or x in self.terminals:
                     continue
-                for rule in self.rules:
+                for rule in self.ruleset.rules.values():
                     # check lhs
                     if rule.lhs != x:
                         continue
@@ -105,7 +85,7 @@ class LR0Parser(BaseParser):
                     x = item.peek_after_dot()
                     # However, for the symbol $ we do not compute Goto(I, $); instead we will
                     # make an accept action
-                    if x is None or x == self.eol:
+                    if x is None or x == self.ruleset.eol:
                         continue
                     j = self.goto(i, x)
                     new_t.add(j)
@@ -147,7 +127,7 @@ class LR0Parser(BaseParser):
         symbols and actions mapping.
         """
 
-        rule_lookup = {r: i for i, r in self.indexed_rules.items()}
+        rule_lookup = {r: i for i, r in self.ruleset.rules.items()}
         t: LRParsingTable = self._init_parsing_table()
         for idx, i in self.states.items():
             for item in i:
@@ -155,8 +135,8 @@ class LR0Parser(BaseParser):
                     rule_idx = rule_lookup[item.to_rule()]
                     for non_term in self.terminals:
                         t[idx][non_term].add(LRAction.reduce(rule_idx))
-                if item.peek_after_dot() == self.eol:
-                    t[idx][self.eol].add(LRAction.accept())
+                if item.peek_after_dot() == self.ruleset.eol:
+                    t[idx][self.ruleset.eol].add(LRAction.accept())
 
         self._add_edges_to_parsing_table(t)
         return t
@@ -178,7 +158,7 @@ class LR0Parser(BaseParser):
 
     def print_rules_and_states(self) -> None:
         print("---=== Rules ===---")
-        for idx, rule in self.indexed_rules.items():
+        for idx, rule in self.ruleset.rules.items():
             print(f"{idx:04} {rule}")
 
         print("\n---=== States ===---")

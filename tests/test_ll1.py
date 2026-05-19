@@ -1,9 +1,10 @@
 from parsers.ll import LL1Parser
-from parsers.example_grammars import GRAMMAR_3_12, GRAMMAR_3_15
+from parsers.grammars.appel_grammar_parser import appel_to_ruleset
+from parsers.grammars.example_grammars import GRAMMAR_3_12, GRAMMAR_3_15
 
 
 def test_example_grammar_3_12() -> None:
-    p = LL1Parser(*GRAMMAR_3_12)
+    p = LL1Parser(appel_to_ruleset(GRAMMAR_3_12))
     non_terminals = p.non_terminals
     assert non_terminals == set(["X", "Y", "Z"])
     assert p.nullables == set(["X", "Y"])
@@ -19,7 +20,7 @@ def test_example_grammar_3_12() -> None:
 
 
 def test_ll_parser_on_grammar_3_15() -> None:
-    p = LL1Parser(*GRAMMAR_3_15)
+    p = LL1Parser(appel_to_ruleset(GRAMMAR_3_15))
     # Table 3.16
 
     ## nullables
