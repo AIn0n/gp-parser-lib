@@ -64,3 +64,10 @@ def bison_to_ruleset(grm: str) -> RuleSet:
         start_sym_idx = 0
 
     return RuleSet(start_rule_idx=start_sym_idx, rules=rules)
+
+
+if __name__ == "__main__":
+    with open("examples_yacc/simple_grammar.y", mode="r") as f:
+        ruleset = bison_to_ruleset(f.read())
+        for rule in ruleset.rules.values():
+            print(rule)

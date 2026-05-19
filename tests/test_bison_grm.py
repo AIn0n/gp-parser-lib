@@ -1,8 +1,7 @@
 from parsers.bison_grammar_parser import bison_to_ruleset
 
 
-def test_given_valid_yacc_grammar_example_func_returns_valid_amount_of_rules():
-    simple_grammar = r"""
+SIMPLE_GRM = r"""
 %union {
 	int pos;
 	int ival;
@@ -59,6 +58,20 @@ expression_list_aux
     |
     ;
 """
-    ruleset = bison_to_ruleset(simple_grammar)
 
+
+def test_given_valid_yacc_grammar_example_func_returns_valid_amount_of_rules():
+    ruleset = bison_to_ruleset(SIMPLE_GRM)
     assert len(ruleset.rules) == 12
+
+
+def test_given_valid_yacc_grammar_with_empty_rule_returns_empty_parsed_rule():
+    ruleset = bison_to_ruleset(SIMPLE_GRM)
+
+    empty_rule_lhs = "expression_list_aux"
+    empty_rules_with_given_lhs = [
+        el
+        for el in ruleset.rules.values()
+        if el.lhs == empty_rule_lhs and len(el.rhs) == 0
+    ]
+    assert len(empty_rules_with_given_lhs) == 1
