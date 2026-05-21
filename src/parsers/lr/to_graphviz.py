@@ -12,7 +12,7 @@ def lr_parser_to_graphviz(
 ) -> pydot.Dot:
     if title is None:
         title = ""
-    graph = pydot.Dot(title, graph_type="graph", bgcolor="white")
+    graph = pydot.Dot(title, graph_type="digraph", bgcolor="white")
     for i, state in p.states.items():
         graph.add_node(pydot.Node(str(i), label=lr_state_to_str(state)))
     for edge in p.edges:

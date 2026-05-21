@@ -111,7 +111,6 @@ class LRItem:
         )
 
 
-LRState = frozenset[LRItem]
 LRParsingTable = dict[int, dict[str, set[LRAction]]]
 
 
@@ -147,12 +146,14 @@ class LREdge:
         )
 
 
+LRState = frozenset[LRItem]
+
+
 def lr_state_to_str(
     state: LRState, prefix: str | None = None, linebreak: str = "\n"
 ) -> str:
     if prefix is None:
         prefix = ""
-    res = ""
 
     lookahead_map: dict[tuple[RuleType, int], list[str]] = defaultdict(list)
     item_map: dict[tuple[RuleType, int], LRItem] = {}
@@ -163,6 +164,7 @@ def lr_state_to_str(
         if item.lookahead is not None:
             lookahead_map[k].append(item.lookahead)
 
+    res = ""
     for k in item_map.keys():
         res += prefix + item_map[k].to_str_with_lookaheads(lookahead_map[k]) + linebreak
 
