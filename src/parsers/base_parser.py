@@ -1,3 +1,5 @@
+from loguru import logger
+
 from dataclasses import dataclass
 from functools import cached_property
 from itertools import chain
@@ -29,6 +31,7 @@ class BaseParser:
             styling = ParserPrintStyler()
         self.ruleset: RuleSet = ruleset
         self.styling = styling
+        logger.debug("{ruleset}", ruleset=self.ruleset)
 
         self.nullables: set[str] = set()
         self.first: MutableMapping[str, set[str]] = defaultdict(set)

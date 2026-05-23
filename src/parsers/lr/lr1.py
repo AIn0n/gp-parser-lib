@@ -1,3 +1,5 @@
+from loguru import logger
+
 from parsers.base_parser import ParserPrintStyler
 from parsers.lr.lr0 import LR0Parser
 from parsers.lr.lr_types import (
@@ -82,22 +84,45 @@ class LR1Parser(LR0Parser):
         mapping: dict[int, int] = dict()
 
         len_states = len(self.states)
+        merges_count = 0
+        # states already consumed into other state - no need to check them twice
+        marked_states = []
         for fidx in range(len_states):
+            if fidx in marked_states:
+                continue
             for sidx in range(fidx + 1, len_states):
+                if sidx in marked_states:
+                    continue
                 if are_states_equal_wo_lookahead(self.states[fidx], self.states[sidx]):
                     mapping[sidx] = fidx
+                    merges_count += 1
+                    marked_states.append(sidx)
                     if verbose:
-                        print("-= merging states =-")
-                        print(f"state {sidx}")
-                        print(lr_state_to_str(self.states[sidx]))
-                        print(f"into state {fidx}")
-                        print(lr_state_to_str(self.states[fidx]))
+                        logger.debug("-= merging states =-")
+                        logger.debug(f"state {sidx}")
+                        logger.debug(lr_state_to_str(self.states[sidx]))
+                        logger.debug(f"into state {fidx}")
+                        logger.debug(lr_state_to_str(self.states[fidx]))
+
+        if verbose:
+            logger.debug(f"{merges_count=}")
 
         new_edges = set()
         for edge in self.edges:
             new_from = mapping.get(edge.from_, edge.from_)
             new_to = mapping.get(edge.to, edge.to)
             new_edges.add(IndexedLREdge(from_=new_from, to=new_to, symbol=edge.symbol))
+            if verbose:
+                logger.debug("-= moving edge =- ")
+                logger.debug(
+                    "prev_from={prev_from}, new_from={new_from}",
+                    prev_from=edge.from_,
+                    new_from=new_from,
+                )
+                logger.debug(
+                    "prev_to={prev_to}, new_to={new_to}", prev_to=edge.to, new_to=new_to
+                )
+                logger.debug("symbol={sym}", sym=edge.symbol)
 
         self.edges = new_edges
         self.states = {k: v for k, v in self.states.items() if k not in mapping.keys()}
