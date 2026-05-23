@@ -1,12 +1,4 @@
-import pytest
-
-from parsers.lr.lr_types import (
-    are_states_equal_wo_lookahead,
-    LRItem,
-    LRState,
-    RuleType,
-    IndexedLREdge,
-)
+from parsers.lr.lr_types import are_states_equal_wo_lookahead, LRItem
 from parsers.lr.lr1 import LR1Parser
 
 from parsers.grammars.example_grammars import GRAMMAR_3_26

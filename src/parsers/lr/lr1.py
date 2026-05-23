@@ -96,6 +96,7 @@ class LR1Parser(LR0Parser):
                 if are_states_equal_wo_lookahead(self.states[fidx], self.states[sidx]):
                     mapping[sidx] = fidx
                     merges_count += 1
+                    self.states[fidx] |= self.states[sidx]
                     marked_states.append(sidx)
                     if verbose:
                         logger.debug("-= merging states =-")
