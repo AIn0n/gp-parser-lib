@@ -1,3 +1,5 @@
+# TODO: Remove all logging code, or wrap it better before release
+
 from loguru import logger
 
 from parsers.base_parser import ParserPrintStyler
