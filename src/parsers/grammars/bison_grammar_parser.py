@@ -38,7 +38,6 @@ def bison_to_ruleset(grm: str, eol: str = "$end") -> RuleSet:
 
     # look for the start rule in the first part with declarations
     start_sym = _find_start_symbol(dec_raw)
-    print(f"{start_sym=}")
 
     unparsed_rules = _remove_sem_actions(grm_raw).split(";")
     rules: dict[int, RuleType] = dict()

@@ -1,26 +1,8 @@
 from typing import Callable
-from itertools import chain
 
 from parsers.lr.lr0 import LR0Parser
 from parsers.lr.slr import SLRParser
 from parsers.lr.lr_types import LRAction, LRActionEnum
-
-
-def pretify_stack(stack, intend: int = 0) -> str:
-    # TODO: not tested yet, found bigger problem
-    res = ""
-    if isinstance(stack, dict):
-        assert len(stack) == 1
-        res += pretify_stack(list(stack.keys())[0])
-        for el in chain.from_iterable(stack.values()):
-            res += pretify_stack(el, intend=intend + 2)
-    elif isinstance(stack, list):
-        assert len(stack) == 1
-        for el in chain.from_iterable(stack):
-            pretify_stack(el, intend=intend + 2)
-    elif isinstance(stack, str):
-        res += pretify_stack(" " * intend + stack, intend=intend + 2)
-    return res
 
 
 class LREngine:
