@@ -38,11 +38,11 @@ def bison_to_ruleset(grm: str, eol: str = "$end") -> RuleSet:
 
     # look for the start rule in the first part with declarations
     start_sym = _find_start_symbol(dec_raw)
+    assert start_sym is not None
 
     unparsed_rules = _remove_sem_actions(grm_raw).split(";")
-    rules: dict[int, RuleType] = dict()
-    start_sym_idx: int = 0
-    idx = 0
+    rules: dict[int, RuleType] = {0: RuleType("$accept", tuple([start_sym, "$end"]))}
+    idx = 1
     for unprs_rule in unparsed_rules:
         if len(unprs_rule) == 0 or unprs_rule.isspace():
             continue
@@ -52,16 +52,12 @@ def bison_to_ruleset(grm: str, eol: str = "$end") -> RuleSet:
             start_sym = lhs
         for el in rhs_col.split("|"):
             rhs = el.strip().split()
-            if lhs == start_sym:
-                rhs.append(eol)
-                start_sym_idx = idx
-
             rules[idx] = RuleType(lhs=lhs, rhs=tuple(rhs))
             idx += 1
 
     assert len(rules) >= 1, "no rules found!"
 
-    return RuleSet(start_rule_idx=start_sym_idx, rules=rules, eol=eol)
+    return RuleSet(start_rule_idx=0, rules=rules, eol=eol)
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ from parsers.base_parser import ParserPrintStyler, BaseParser
 from parsers.parser_types import RuleSet, RuleType
 from parsers.lr.lr_types import (
     LRAction,
+    LRActionEnum,
     LREdge,
     LRItem,
     LRState,
@@ -165,3 +166,76 @@ class LR0Parser(BaseParser):
         for idx, state in self.states.items():
             print(f"state {idx}")
             print(lr_state_to_str(state, "    "))
+
+    def get_conflicts(self) -> list[tuple[int, str, set[LRAction]]]:
+        result = []
+        for state, col in self.parsing_table.items():
+            for sym, actions in col.items():
+                if len(actions) > 1:
+                    result.append(tuple([state, sym, actions]))
+
+        return result
+
+    def bison_like_report(self) -> None:
+        for state, _, actions in self.get_conflicts():
+            conflict = [action.type_ for action in actions]
+            print(f"State {state} conflict: {conflict}")
+
+        print("Grammar\n")
+        for idx, rule in self.ruleset.rules.items():
+            print(f"  {idx:04} {rule}")
+
+        print("\n\nTerminals, with rules where they appear\n")
+        for el in sorted(self.terminals):
+            appearances = []
+            for k, v in self.ruleset.rules.items():
+                if el in v or el in el in v.rhs:
+                    appearances.append(k)
+            print(f"{el}: {' '.join(map(str, appearances))}")
+
+        print("\n\nNonterminals, with rules where they appear\n")
+        for el in self.non_terminals:
+            appearances_left = []
+            appearnaces_right = []
+            for k, v in self.ruleset.rules.items():
+                if el in v.lhs:
+                    appearances_left.append(k)
+                if el in v.rhs:
+                    appearnaces_right.append(k)
+
+            print(el)
+            print(f"  on left: {' '.join(map(str, appearances_left))}", end="")
+            if len(appearnaces_right) > 0:
+                print(f", on right: {' '.join(map(str, appearnaces_right))}", end="")
+            print()
+
+        print("\n\n---=== States ===---\n")
+        for idx, state in self.states.items():
+            print(f"state {idx}")
+            print(lr_state_to_str(state, "    "))
+
+            action_list = []
+            offset = 0
+            for sym, actions in self.parsing_table[idx].items():
+                if len(actions) == 0:
+                    continue
+                for action in actions:
+                    s: str = ""
+                    match action:
+                        case LRAction(type_=LRActionEnum.ACCEPT):
+                            s = "accept"
+                        case LRAction(type_=LRActionEnum.REDUCE, to=n):
+                            s = f"reduce using rule {n}"
+                        case LRAction(type_=LRActionEnum.GOTO, to=n):
+                            s = f"go to state {n}"
+                        case LRAction(type_=LRActionEnum.SHIFT, to=n):
+                            s = f"shift and go to state {n}"
+                    action_list.append(tuple([sym, s]))
+                offset = max(len(sym), offset)
+
+            for sym, s in sorted(action_list, key=lambda x: len(x[1])):
+                print(f"    {sym}", end="")
+                print(" " * (offset - len(sym) + 2), end="")
+                print(s)
+
+            print("\n")
