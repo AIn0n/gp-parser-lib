@@ -150,7 +150,10 @@ LRState = frozenset[LRItem]
 
 
 def lr_state_to_str(
-    state: LRState, prefix: str | None = None, linebreak: str = "\n"
+    state: LRState,
+    prefix: str | None = None,
+    linebreak: str = "\n",
+    show_lookahead: bool = True,
 ) -> str:
     if prefix is None:
         prefix = ""
@@ -166,7 +169,8 @@ def lr_state_to_str(
 
     res = ""
     for k in item_map.keys():
-        res += prefix + item_map[k].to_str_with_lookaheads(lookahead_map[k]) + linebreak
+        lookaheads = lookahead_map[k] if show_lookahead else []
+        res += prefix + item_map[k].to_str_with_lookaheads(lookaheads) + linebreak
 
     return res
 

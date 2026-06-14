@@ -8,8 +8,8 @@ class RuleType(NamedTuple):
 
     @staticmethod
     def from_str(s: str, eol: str, is_start: bool = False) -> RuleType:
-        lhs, rhs = s.split("->")
-        rhs = rhs.strip().split()
+        lhs, rhs_seq = s.split("->")
+        rhs: list[str] = rhs_seq.strip().split()
         if is_start:
             rhs.append(eol)
         return RuleType(lhs=lhs.strip(), rhs=tuple(rhs))

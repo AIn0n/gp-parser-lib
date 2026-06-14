@@ -172,16 +172,18 @@ class LR0Parser(BaseParser):
         for state, col in self.parsing_table.items():
             for sym, actions in col.items():
                 if len(actions) > 1:
-                    result.append(tuple([state, sym, actions]))
+                    result.append((state, sym, actions))
 
         return result
 
     def bison_like_report(self) -> None:
-        for state, _, actions in self.get_conflicts():
-            conflict = [action.type_ for action in actions]
-            print(f"State {state} conflict: {conflict}")
+        for state_idx, _, actions in self.get_conflicts():
+            conflict = "/".join(
+                sorted((action.type_.value for action in actions), reverse=True)
+            )
+            print(f"State {state_idx} conflict: {conflict}")
 
-        print("Grammar\n")
+        print("\n\nGrammar\n")
         for idx, rule in self.ruleset.rules.items():
             print(f"  {idx:04} {rule}")
 
@@ -212,7 +214,7 @@ class LR0Parser(BaseParser):
         print("\n\n---=== States ===---\n")
         for idx, state in self.states.items():
             print(f"state {idx}")
-            print(lr_state_to_str(state, "    "))
+            print(lr_state_to_str(state, "    ", show_lookahead=False))
 
             action_list = []
             offset = 0
@@ -225,7 +227,8 @@ class LR0Parser(BaseParser):
                         case LRAction(type_=LRActionEnum.ACCEPT):
                             s = "accept"
                         case LRAction(type_=LRActionEnum.REDUCE, to=n):
-                            s = f"reduce using rule {n}"
+                            rule_lhs = self.ruleset.rules[n].lhs
+                            s = f"reduce using rule {n} ({rule_lhs})"
                         case LRAction(type_=LRActionEnum.GOTO, to=n):
                             s = f"go to state {n}"
                         case LRAction(type_=LRActionEnum.SHIFT, to=n):

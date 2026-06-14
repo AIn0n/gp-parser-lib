@@ -1,3 +1,7 @@
+# TODO: fix these tests - the difference lies now at
+#       the amount of states. I should count the states
+#       in bison result and compare mine
+
 from parsers.grammars.bison_grammar_parser import bison_to_ruleset
 
 

@@ -1,3 +1,8 @@
+# TODO: fix the test - the main difference right now is the
+#       amount of the states, for bison grammar format I'm
+#       adding starting rule, which I'm not doing for appel
+#       grammar type.
+
 from parsers.grammars import appel_to_ruleset, bison_to_ruleset
 
 
